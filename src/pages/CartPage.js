@@ -1,170 +1,174 @@
+// src/pages/CartPage.js
 import React from "react";
 import { useCart } from "../context/CartContext";
-import { API_BASE, STORAGE_URL } from "../config";
 
+const STORAGE_URL =
+  process.env.REACT_APP_STORAGE_URL;
 
 function CartPage() {
-  const { items, total, updateItem, removeItem, clearCart } = useCart();
+  const { cartItems, updateItem, removeFromCart } = useCart();
 
-  if (items.length === 0) {
+  const items = Array.isArray(cartItems) ? cartItems : [];
+
+  const total = items.reduce(
+    (sum, item) => sum + Number(item.price) * (item.quantity || 0),
+    0
+  );
+
+  const handleCheckout = () => {
+    alert("Checkout is not implemented yet.");
+  };
+
+  const handleQtyChange = (item, value) => {
+    const qty = Math.max(1, Number(value) || 1);
+    updateItem(item.id, item.size || null, qty);
+  };
+
+  const handleSizeChange = (item, newSize) => {
+    updateItem(item.id, newSize || null, item.quantity || 1);
+  };
+
+  if (!items.length) {
     return (
-      <div>
-        <h1>Your Cart</h1>
+      <div className="cart-page">
+        <h1 className="page-title">Your Cart</h1>
         <p>Your cart is empty.</p>
       </div>
     );
   }
 
   return (
-    <div>
-      <h1>Your Cart</h1>
+    <div className="cart-page">
+      <h1 className="page-title">Your Cart</h1>
 
-      <table
-        style={{
-          width: "100%",
-          borderCollapse: "collapse",
-          marginTop: 16,
-          marginBottom: 16,
-        }}
-      >
-        <thead>
-          <tr style={{ borderBottom: "1px solid #eee" }}>
-            <th style={{ textAlign: "left", padding: 8 }}>Product</th>
-            <th style={{ textAlign: "left", padding: 8 }}>Size</th>
-            <th style={{ textAlign: "right", padding: 8 }}>Price</th>
-            <th style={{ textAlign: "center", padding: 8 }}>Qty</th>
-            <th style={{ textAlign: "right", padding: 8 }}>Subtotal</th>
-            <th style={{ padding: 8 }}></th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((item) => (
-            <tr key={`${item.id}-${item.size || "no-size"}`}>
-              <td style={{ padding: 8 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  {item.image ? (
-                    <img
-                      src={`${STORAGE_URL}/${item.image}`}
-                      alt={item.name}
-                      style={{
-                        width: 50,
-                        height: 50,
-                        objectFit: "cover",
-                        borderRadius: 6,
-                      }}
-                    />
-                  ) : (
-                    <div
-                      style={{
-                        width: 50,
-                        height: 50,
-                        borderRadius: 6,
-                        background: "#f3f3f3",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: 11,
-                        color: "#999",
-                      }}
-                    >
-                      No image
-                    </div>
-                  )}
-                  <div>
-                    <div style={{ fontWeight: 500 }}>{item.name}</div>
-                  </div>
-                </div>
-              </td>
-
-              <td style={{ padding: 8 }}>
-                {item.size ? item.size : "N/A"}
-              </td>
-
-              <td style={{ padding: 8, textAlign: "right" }}>
-                ${item.price.toFixed(2)}
-              </td>
-
-              <td style={{ padding: 8, textAlign: "center" }}>
-                <input
-                  type="number"
-                  min={1}
-                  value={item.quantity}
-                  onChange={(e) =>
-                    updateItem(
-                      item.id,
-                      item.size || null,
-                      Number(e.target.value) || 1
-                    )
-                  }
-                  style={{ width: 70, padding: 4, borderRadius: 6 }}
-                />
-              </td>
-
-              <td style={{ padding: 8, textAlign: "right" }}>
-                ${(item.price * item.quantity).toFixed(2)}
-              </td>
-
-              <td style={{ padding: 8, textAlign: "center" }}>
-                <button
-                  onClick={() => removeItem(item.id, item.size || null)}
-                  style={{
-                    border: "none",
-                    background: "transparent",
-                    color: "#dc3545",
-                    cursor: "pointer",
-                  }}
-                >
-                  ✕
-                </button>
-              </td>
+      <div className="cart-table-wrapper">
+        <table className="cart-table">
+          <thead>
+            <tr>
+              <th className="cart-col-product">Product</th>
+              <th className="cart-col-size">Size</th>
+              <th className="cart-col-price">Price</th>
+              <th className="cart-col-qty">Qty</th>
+              <th className="cart-col-subtotal">Subtotal</th>
+              <th className="cart-col-actions" />
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
 
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginTop: 8,
-        }}
-      >
-        <button
-          onClick={clearCart}
-          style={{
-            padding: "6px 12px",
-            borderRadius: 999,
-            border: "1px solid #ccc",
-            background: "#f8f9fa",
-            cursor: "pointer",
-          }}
-        >
-          Clear cart
-        </button>
+          <tbody>
+            {items.map((item) => {
+              const availableSizes = Array.isArray(item.product?.sizes)
+                ? item.product.sizes
+                : Array.isArray(item.sizes)
+                ? item.sizes
+                : [];
 
-        <div style={{ fontSize: 18, fontWeight: "bold" }}>
-          Total: ${total.toFixed(2)}
-        </div>
+              const imgPath = item.image || item.product?.image || null;
+              const imgUrl =
+                imgPath && imgPath.startsWith("http")
+                  ? imgPath
+                  : imgPath
+                  ? `${STORAGE_URL}/${imgPath}`
+                  : null;
+
+              const subtotal =
+                Number(item.price) * (Number(item.quantity) || 0);
+
+              return (
+                <tr key={`${item.id}-${item.size || "no-size"}`}>
+                  {/* Product cell */}
+                  <td className="cart-cell-product">
+                    <div className="cart-product">
+                      {imgUrl ? (
+                        <img
+                          src={imgUrl}
+                          alt={item.name}
+                          className="cart-product-thumb"
+                        />
+                      ) : (
+                        <div className="cart-product-thumb cart-product-thumb--empty">
+                          No image
+                        </div>
+                      )}
+                      <div className="cart-product-info">
+                        <div className="cart-product-name">{item.name}</div>
+                        {item.product?.category?.name && (
+                          <div className="cart-product-category">
+                            {item.product.category.name}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+
+                  {/* Size */}
+                  <td className="cart-cell-size">
+                    {availableSizes.length ? (
+                      <select
+                        value={item.size || ""}
+                        onChange={(e) =>
+                          handleSizeChange(item, e.target.value || null)
+                        }
+                        className="cart-select"
+                      >
+                        <option value="">Select</option>
+                        {availableSizes.map((sizeVal) => (
+                          <option key={sizeVal} value={sizeVal}>
+                            {sizeVal}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      "N/A"
+                    )}
+                  </td>
+
+                  {/* Price */}
+                  <td className="cart-cell-price">
+                    ${Number(item.price).toFixed(2)}
+                  </td>
+
+                  {/* Quantity */}
+                  <td className="cart-cell-qty">
+                    <input
+                      type="number"
+                      min="1"
+                      value={item.quantity || 1}
+                      onChange={(e) => handleQtyChange(item, e.target.value)}
+                      className="cart-qty-input"
+                    />
+                  </td>
+
+                  {/* Subtotal */}
+                  <td className="cart-cell-subtotal">
+                    ${subtotal.toFixed(2)}
+                  </td>
+
+                  {/* Remove */}
+                  <td className="cart-cell-actions">
+                    <button
+                      className="btn-remove"
+                      onClick={() => removeFromCart(item.id, item.size || null)}
+                    >
+                      Remove
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
 
-      {/* Later we’ll hook this to Laravel order API */}
-      <div style={{ marginTop: 16 }}>
-        <button
-          style={{
-            padding: "8px 16px",
-            borderRadius: 999,
-            border: "none",
-            background: "#198754",
-            color: "#fff",
-            cursor: "pointer",
-          }}
-          onClick={() => alert("Checkout with Laravel API coming soon")}
-        >
-          Checkout
-        </button>
+      <div className="cart-total-row">
+        <span>Total:</span>
+        <span>${total.toFixed(2)}</span>
       </div>
+      <div className="cart-actions-row">
+      <button className="btn-primary" onClick={handleCheckout}>
+        Checkout
+      </button>
     </div>
+  </div>
   );
 }
 

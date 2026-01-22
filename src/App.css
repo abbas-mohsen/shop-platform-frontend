@@ -462,3 +462,149 @@ a {
   margin-top: 14px;
 }
 
+/* Cart page */
+
+.cart-page {
+  padding: 32px;
+}
+
+.cart-table-wrapper {
+  overflow-x: auto;
+  margin-top: 12px;
+}
+
+.cart-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  color: #fff;
+}
+
+.cart-table th,
+.cart-table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid #333;
+}
+
+.cart-table thead th {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 600;
+  color: #bbb;
+}
+
+.cart-col-product {
+  text-align: left;
+}
+
+.cart-col-size,
+.cart-col-price,
+.cart-col-qty,
+.cart-col-subtotal,
+.cart-col-actions {
+  text-align: center;
+}
+
+/* Product info in cart */
+
+.cart-product {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cart-product-thumb {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #111;
+}
+
+.cart-product-thumb--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: #888;
+}
+
+.cart-product-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.cart-product-name {
+  font-weight: 600;
+}
+
+.cart-product-category {
+  font-size: 11px;
+  color: #888;
+}
+
+/* Inputs / selects */
+
+.cart-select,
+.cart-qty-input {
+  background: #000;
+  color: #fff;
+  border-radius: 999px;
+  border: 1px solid #444;
+  padding: 4px 8px;
+  font-size: 13px;
+}
+
+.cart-qty-input {
+  width: 70px;
+  text-align: center;
+}
+
+/* Remove button */
+
+.btn-remove {
+  background: transparent;
+  color: #ff4d4f;
+  border-radius: 999px;
+  border: 1px solid #ff4d4f;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.btn-remove:hover {
+  background: #ff4d4f;
+  color: #000;
+}
+
+/* Total row */
+
+.cart-total-row {
+  margin-top: 18px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.cart-actions-row {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.mb-3 {
+  margin-bottom: 12px;
+}
+
+.text-input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background: #000;
+  color: #fff;
+  font-size: 14px;
+}
