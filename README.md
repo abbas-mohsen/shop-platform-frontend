@@ -1,70 +1,127 @@
-# Getting Started with Create React App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+---
 
-## Available Scripts
+## Frontend `README.md` (React)
 
-In the project directory, you can run:
+```markdown
+# Shop Platform – Frontend (React SPA)
 
-### `npm start`
+A modern React single-page application (SPA) that consumes a Laravel backend to provide a simple online shop:
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- Homepage with hero section, categories, and featured products.
+- Dedicated products page with grid layout.
+- Product details page.
+- Cart page with size and quantity management.
+- “Quick add” modal that behaves like a mini product page.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+---
 
-### `npm test`
+## 1. Tech Stack
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- **React** (functional components + hooks)
+- **React Router** for client-side routing
+- **Context API** for cart management (`CartContext`)
+- **CSS** with custom styling in `App.css`
 
-### `npm run build`
+---
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## 2. Main Features
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Global Layout
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+- Top navigation bar:
+  - Brand name from environment variable (`REACT_APP_APP_NAME`)
+  - Links: Home, Products, Cart
+- Dark theme:
+  - Black background
+  - White text
+  - Subtle hover animations and transitions
 
-### `npm run eject`
+### Home Page
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+- Hero section with brand logo/image and call-to-action buttons.
+- Category tiles with background images:
+  - Men, Women, Unisex, Shoes, etc. (customizable)
+  - Hover effects (lift + zoom on image).
+- Featured products:
+  - Uses same product card design as the products page.
+  - “Quick add” button opens a modal.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Products Page
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+- Fetch products from Laravel backend (`/api/products`).
+- Display as grid of cards:
+  - Product image
+  - Category name
+  - Product name
+  - Price
+  - Available sizes (from backend `sizes` array)
+- “Quick add” button:
+  - Opens a **QuickAddModal**:
+    - Product image
+    - Title
+    - Category
+    - Price
+    - Description
+    - Size dropdown (using allowed sizes from backend)
+    - Quantity selector
+  - On submit, calls `addToCart` from `CartContext`.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### Product Details Page
 
-## Learn More
+- Fetch a single product from `/api/products/:id`.
+- Show:
+  - Image
+  - Category
+  - Name, price
+  - Full description
+  - Available sizes dropdown
+  - Quantity input
+- Add to cart (using the same cart context logic).
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### Cart Page
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+- Shows items added from both product details and Quick add modal:
+  - Product name
+  - Selected size
+  - Quantity
+  - Price and subtotal
+  - Product image
+- Update quantity & size.
+- Remove item from cart.
+- Shows total price.
 
-### Code Splitting
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## 3. Environment Variables
 
-### Analyzing the Bundle Size
+Create a `.env` file in the root of the React project:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+```dotenv
+REACT_APP_API_BASE_URL=http://127.0.0.1:8000
+REACT_APP_STORAGE_URL=http://127.0.0.1:8000/storage
+REACT_APP_APP_NAME="Shop Platform"
 
-### Making a Progressive Web App
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## 4. Project Structure
 
-### Advanced Configuration
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+shop-frontend/
+├─ src/
+│  ├─ components/
+│  │  ├─ Navbar.js          # Top navigation bar
+│  │  ├─ ProductCard.js     # Product card with "Quick add" and "Details"
+│  │  └─ QuickAddModal.js   # Full mini product page in a modal
+│  ├─ context/
+│  │  └─ CartContext.js     # Cart state and add/update/remove logic
+│  ├─ pages/
+│  │  ├─ HomePage.js        # Hero, categories, featured products
+│  │  ├─ ProductsPage.js    # Full products grid, integrates QuickAddModal
+│  │  ├─ ProductDetailsPage.js
+│  │  └─ CartPage.js
+│  ├─ App.js                # Router + layout
+│  ├─ App.css               # Styling (dark theme, transitions, modal)
+│  └─ index.js              # Entry point
+├─ public/
+└─ package.json
