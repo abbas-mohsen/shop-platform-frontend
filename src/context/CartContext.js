@@ -1,18 +1,13 @@
 import React, { createContext, useContext, useState } from "react";
 
-// Create context
 const CartContext = createContext(null);
 
-// Provider
 export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState([]);
-
-  // Add to cart: product + size + quantity
   const addToCart = (product, size = null, quantity = 1) => {
     const qty = Number(quantity) || 1;
 
     setCartItems((prev) => {
-      // same product + same size => increase quantity
       const index = prev.findIndex(
         (item) => item.id === product.id && item.size === size
       );
@@ -26,7 +21,6 @@ export function CartProvider({ children }) {
         return updated;
       }
 
-      // otherwise add new item
       return [
         ...prev,
         {
@@ -36,13 +30,12 @@ export function CartProvider({ children }) {
           size: size,
           quantity: qty,
           image: product.image,
-          product: product, // keep full object if needed
+          product: product, 
         },
       ];
     });
   };
 
-  // Update an item (for CartPage)
   const updateItem = (productId, size = null, quantity = 1) => {
     const qty = Number(quantity) || 1;
 
@@ -55,7 +48,6 @@ export function CartProvider({ children }) {
     );
   };
 
-  // Remove item completely
   const removeFromCart = (productId, size = null) => {
     setCartItems((prev) =>
       prev.filter(
@@ -64,7 +56,6 @@ export function CartProvider({ children }) {
     );
   };
 
-  // Clear everything (if you ever need it)
   const clearCart = () => setCartItems([]);
 
   const value = {
@@ -80,7 +71,7 @@ export function CartProvider({ children }) {
   );
 }
 
-// Hook
+
 export function useCart() {
   const ctx = useContext(CartContext);
   if (!ctx) {

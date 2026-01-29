@@ -58,7 +58,6 @@ function HomePage() {
 
   return (
     <div className="home-root">
-      {/* HERO */}
       <section className="hero">
         <div className="hero-content">
           <p className="hero-eyebrow">New Season</p>
@@ -84,8 +83,6 @@ function HomePage() {
     <img src={logo} alt="Brand logo" className="hero-logo" />
   </div>
       </section>
-
-      {/* CATEGORY TILES */}
 <section className="home-categories">
   <h2 className="section-title">Shop by category</h2>
   <div className="category-grid">
@@ -110,8 +107,6 @@ function HomePage() {
   </div>
 </section>
 
-
-      {/* FEATURED PRODUCTS */}
       <section id="featured" className="home-featured">
         <div className="section-header">
           <h2 className="section-title">Featured products</h2>

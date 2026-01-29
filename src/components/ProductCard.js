@@ -7,7 +7,7 @@ const STORAGE_URL =
 function ProductCard({ product, onQuickAdd }) {
   const handleQuickAddClick = () => {
     if (onQuickAdd) {
-      onQuickAdd(product); // parent opens modal
+      onQuickAdd(product);
     }
   };
 

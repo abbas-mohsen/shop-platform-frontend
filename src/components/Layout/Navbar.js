@@ -15,7 +15,7 @@ function Navbar() {
   return (
     <>
       <div className="nav-top-bar">
-        FREE SHIPPING ON SELECTED ITEMS
+        XTREMEFIT, XTREME PERFORMANCE
       </div>
 
       <nav className="nav-main">
@@ -34,15 +34,16 @@ function Navbar() {
             </NavLink>
           )}
           {isAdmin && (
-            <>
-              <a href="http://127.0.0.1:8000/admin/products" style={{ marginLeft: 20 }}>
-                Manage Products
-              </a>
-              <a href="http://127.0.0.1:8000/admin/orders" style={{ marginLeft: 20 }}>
-                Manage Orders
-              </a>
-            </>
-          )}
+  <>
+    <NavLink to="/admin/products" style={{ marginLeft: 20 }}>
+      Manage Products
+    </NavLink>
+    <NavLink to="/admin/orders" style={{ marginLeft: 20 }}>
+      Manage Orders
+    </NavLink>
+  </>
+)}
+
         </div>
 
         <div className="nav-links">

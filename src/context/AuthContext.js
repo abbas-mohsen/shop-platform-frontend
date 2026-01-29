@@ -1,4 +1,3 @@
-// src/context/AuthContext.js
 import React, { createContext, useContext, useEffect, useState } from "react";
 
 const API_BASE = process.env.REACT_APP_API_BASE_URL;
@@ -7,13 +6,12 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true); // initial "who am I?"
+  const [loading, setLoading] = useState(true);
 
   const token = typeof window !== "undefined"
     ? localStorage.getItem("auth_token")
     : null;
 
-  // Fetch /api/user if we already have a token
   useEffect(() => {
     if (!token) {
       setLoading(false);
@@ -89,7 +87,7 @@ export function AuthProvider({ children }) {
         });
       }
     } catch (e) {
-      // ignore
+  
     }
     localStorage.removeItem("auth_token");
     setUser(null);

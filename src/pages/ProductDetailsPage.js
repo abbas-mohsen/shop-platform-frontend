@@ -27,7 +27,6 @@ function ProductDetailsPage() {
         setProduct(data);
         setLoading(false);
 
-        // Preselect first size if available
         if (Array.isArray(data.sizes) && data.sizes.length > 0) {
           setSelectedSize(data.sizes[0]);
         }
@@ -110,8 +109,6 @@ function ProductDetailsPage() {
             ? product.sizes.join(", ")
             : "N/A"}
         </div>
-
-        {/* Size select if product has sizes */}
         {Array.isArray(product.sizes) && product.sizes.length > 0 && (
           <div style={{ marginBottom: 12 }}>
             <label style={{ display: "block", marginBottom: 4 }}>

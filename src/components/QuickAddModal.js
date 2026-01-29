@@ -6,12 +6,10 @@ const STORAGE_URL =
 function QuickAddModal({ product, isOpen, onClose, onConfirm }) {
   const [size, setSize] = useState("");
   const [quantity, setQuantity] = useState(1);
-
-  // Reset fields whenever we open on a new product
   useEffect(() => {
     if (isOpen && product) {
       if (Array.isArray(product.sizes) && product.sizes.length > 0) {
-        setSize(product.sizes[0]); // default first size
+        setSize(product.sizes[0]);
       } else {
         setSize("");
       }
@@ -45,7 +43,6 @@ function QuickAddModal({ product, isOpen, onClose, onConfirm }) {
         </button>
 
         <div className="modal-main">
-          {/* LEFT: image */}
           <div className="modal-image-wrap">
             {product.image ? (
               <img
@@ -58,7 +55,6 @@ function QuickAddModal({ product, isOpen, onClose, onConfirm }) {
             )}
           </div>
 
-          {/* RIGHT: full info */}
           <div className="modal-info">
             <h2 className="modal-title">{product.name}</h2>
 

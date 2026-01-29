@@ -1,4 +1,3 @@
-// src/pages/CartPage.js
 import React from "react";
 import { useCart } from "../context/CartContext";
 
@@ -75,7 +74,6 @@ function CartPage() {
 
               return (
                 <tr key={`${item.id}-${item.size || "no-size"}`}>
-                  {/* Product cell */}
                   <td className="cart-cell-product">
                     <div className="cart-product">
                       {imgUrl ? (
@@ -99,8 +97,6 @@ function CartPage() {
                       </div>
                     </div>
                   </td>
-
-                  {/* Size */}
                   <td className="cart-cell-size">
                     {availableSizes.length ? (
                       <select
@@ -121,13 +117,9 @@ function CartPage() {
                       "N/A"
                     )}
                   </td>
-
-                  {/* Price */}
                   <td className="cart-cell-price">
                     ${Number(item.price).toFixed(2)}
                   </td>
-
-                  {/* Quantity */}
                   <td className="cart-cell-qty">
                     <input
                       type="number"
@@ -137,13 +129,9 @@ function CartPage() {
                       className="cart-qty-input"
                     />
                   </td>
-
-                  {/* Subtotal */}
                   <td className="cart-cell-subtotal">
                     ${subtotal.toFixed(2)}
                   </td>
-
-                  {/* Remove */}
                   <td className="cart-cell-actions">
                     <button
                       className="btn-remove"

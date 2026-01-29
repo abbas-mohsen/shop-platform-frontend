@@ -12,8 +12,6 @@ function ProductsPage() {
   const [error, setError]       = useState(null);
 
   const { addToCart } = useCart();
-
-  // quick add modal state
   const [quickAddProduct, setQuickAddProduct] = useState(null);
   const [isQuickAddOpen, setIsQuickAddOpen]   = useState(false);
 
@@ -35,7 +33,6 @@ function ProductsPage() {
       });
   }, []);
 
-  // called when card's "Quick add" is clicked
   const openQuickAdd = (product) => {
     setQuickAddProduct(product);
     setIsQuickAddOpen(true);
@@ -46,7 +43,6 @@ function ProductsPage() {
     setQuickAddProduct(null);
   };
 
-  // called from modal when user submits
   const handleQuickAddConfirm = (product, size, quantity) => {
     addToCart(product, size, quantity);
     closeQuickAdd();
