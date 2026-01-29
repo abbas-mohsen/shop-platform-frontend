@@ -162,7 +162,7 @@ function AdminProductFormPage() {
         ? `${API_BASE}/api/admin/products/${id}`
         : `${API_BASE}/api/admin/products`;
 
-      const method = isEditMode ? "PUT" : "POST";
+      const method = "POST";
 
       const res = await fetch(url, {
         method,

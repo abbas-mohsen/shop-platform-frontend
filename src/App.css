@@ -695,3 +695,23 @@ a {
   color: #888;
   margin-top: 4px;
 }
+.btn-small-outline {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid #fff;
+  background: transparent;
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn-small-danger {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid #ff4d4d;
+  background: #ff4d4d;
+  color: #000;
+  font-size: 12px;
+  cursor: pointer;
+}
