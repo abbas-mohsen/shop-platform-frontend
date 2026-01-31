@@ -1,11 +1,13 @@
 import React from "react";
 import { useCart } from "../context/CartContext";
+import { useNavigate } from "react-router-dom";
 
 const STORAGE_URL =
   process.env.REACT_APP_STORAGE_URL;
 
 function CartPage() {
   const { cartItems, updateItem, removeFromCart } = useCart();
+  const navigate = useNavigate(); 
 
   const items = Array.isArray(cartItems) ? cartItems : [];
 
@@ -15,7 +17,22 @@ function CartPage() {
   );
 
   const handleCheckout = () => {
-    alert("Checkout is not implemented yet.");
+     const missingSize = items.some((item) => {
+      const availableSizes = Array.isArray(item.product?.sizes)
+        ? item.product.sizes
+        : Array.isArray(item.sizes)
+        ? item.sizes
+        : [];
+
+      return availableSizes.length > 0 && !item.size;
+    });
+
+    if (missingSize) {
+      alert("Please choose a size for all products before checkout.");
+      return;
+    }
+
+    navigate("/checkout");
   };
 
   const handleQtyChange = (item, value) => {

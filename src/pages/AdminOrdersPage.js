@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 
 const API_BASE = process.env.REACT_APP_API_BASE_URL;
 
@@ -10,7 +10,8 @@ function AdminOrdersPage() {
   const { isAdmin } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState("");
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!isAdmin) {
@@ -36,7 +37,8 @@ function AdminOrdersPage() {
         return res.json();
       })
       .then((data) => {
-        setOrders(data);
+        // assuming API returns an array; if it returns {orders: [...]}, adjust to data.orders
+        setOrders(Array.isArray(data) ? data : data.orders || []);
         setLoading(false);
       })
       .catch((err) => {
@@ -73,8 +75,18 @@ function AdminOrdersPage() {
     }
   };
 
+  const handleOpenOrder = (order) => {
+    // 👉 go to React admin order details page, passing the full order in state
+    navigate(`/admin/orders/${order.id}`, { state: { order } });
+  };
+
   if (loading) return <div className="home-root">Loading orders...</div>;
-  if (error)   return <div className="home-root" style={{ color: "red" }}>{error}</div>;
+  if (error)
+    return (
+      <div className="home-root" style={{ color: "red" }}>
+        {error}
+      </div>
+    );
 
   return (
     <div className="home-root">
@@ -117,26 +129,28 @@ function AdminOrdersPage() {
                     ))}
                   </select>
                 </td>
-                <td>
-                  {new Date(order.created_at).toLocaleString()}
-                </td>
+                <td>{new Date(order.created_at).toLocaleString()}</td>
                 <td style={{ fontSize: 12 }}>
                   {order.items && order.items.length > 0
                     ? order.items
-                        .map((i) =>
-                          `${i.quantity}x ${i.product ? i.product.name : "Product"}`
+                        .map(
+                          (i) =>
+                            `${i.quantity}x ${
+                              i.product ? i.product.name : "Product"
+                            }`
                         )
                         .join(", ")
                     : "—"}
                 </td>
                 <td>
-                  <a
-                    href={`${API_BASE}/admin/orders/${order.id}`}
+                  <button
+                    type="button"
+                    onClick={() => handleOpenOrder(order)}
                     className="btn-outline"
                     style={{ fontSize: 12, padding: "4px 10px" }}
                   >
-                    Open (Laravel)
-                  </a>
+                    Open
+                  </button>
                 </td>
               </tr>
             ))}

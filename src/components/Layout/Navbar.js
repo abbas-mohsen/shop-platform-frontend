@@ -29,7 +29,7 @@ function Navbar() {
           </NavLink>
           <NavLink to="/products">Products</NavLink>
           {isLoggedIn && (
-            <NavLink to="/orders" style={{ marginLeft: 20 }}>
+            <NavLink to="/my-orders" style={{ marginLeft: 20 }}>
               My Orders
             </NavLink>
           )}
