@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-const apiBaseUrl =
-  process.env.REACT_APP_API_BASE_URL;
+const API_BASE =
+  process.env.REACT_APP_API_BASE_URL || "http://127.0.0.1:8000";
 const STORAGE_URL = process.env.REACT_APP_STORAGE_URL;
 
-const MyOrderDetailsPage = () => {
+function MyOrderDetailsPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -25,28 +25,23 @@ const MyOrderDetailsPage = () => {
           return;
         }
 
-        const response = await fetch(
-          `${apiBaseUrl}/api/my-orders/${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              Accept: "application/json",
-            },
-          }
-        );
+        const res = await fetch(`${API_BASE}/api/my-orders/${id}`, {
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-        const data = await response.json();
+        const data = await res.json();
 
-        if (!response.ok) {
-          throw new Error(
-            data.message || "Failed to load order details."
-          );
+        if (!res.ok) {
+          throw new Error(data.message || "Failed to load order.");
         }
 
         setOrder(data.order || null);
-      } catch (err) {
-        console.error(err);
-        setError(err.message || "Something went wrong.");
+      } catch (e) {
+        console.error(e);
+        setError(e.message || "Error loading order.");
       } finally {
         setLoading(false);
       }
@@ -55,12 +50,10 @@ const MyOrderDetailsPage = () => {
     if (id) fetchOrder();
   }, [id]);
 
-  const formatDate = (isoString) => {
-    if (!isoString) return "";
-    return new Date(isoString).toLocaleString();
-  };
+  const formatDate = (iso) =>
+    iso ? new Date(iso).toLocaleString() : "";
 
-  const formatPaymentMethod = (pm) => {
+  const formatPayment = (pm) => {
     if (pm === "cash") return "Cash on Delivery";
     if (pm === "card") return "Card";
     return pm || "-";
@@ -71,27 +64,45 @@ const MyOrderDetailsPage = () => {
     return s.charAt(0).toUpperCase() + s.slice(1);
   };
 
+  const getStatusClass = (status) => {
+    switch (status) {
+      case "paid":
+        return "status-pill paid";
+      case "shipped":
+        return "status-pill shipped";
+      case "cancelled":
+        return "status-pill cancelled";
+      case "pending":
+      default:
+        return "status-pill pending";
+    }
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <p>Loading order...</p>
+      <div className="order-details-page">
+        <div className="orders-container">
+          <p className="orders-loading">Loading order...</p>
+        </div>
       </div>
     );
   }
 
   if (error || !order) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-center">
-          <p className="mb-4 text-red-400">
-            {error || "Order not found."}
-          </p>
-          <button
-            onClick={() => navigate("/my-orders")}
-            className="border border-white px-4 py-2 rounded-md hover:bg-white hover:text-black transition"
-          >
-            Back to My Orders
-          </button>
+      <div className="order-details-page">
+        <div className="orders-container">
+          <div className="orders-error-card">
+            <p className="orders-error-text">
+              {error || "Order not found."}
+            </p>
+            <button
+              className="btn-outline"
+              onClick={() => navigate("/my-orders")}
+            >
+              Back to My Orders
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -100,43 +111,54 @@ const MyOrderDetailsPage = () => {
   const items = Array.isArray(order.items) ? order.items : [];
 
   return (
-    <div className="min-h-screen bg-black text-white px-4 py-8">
-      <div className="max-w-5xl mx-auto">
+    <div className="order-details-page">
+      <div className="orders-container">
         <button
+          className="back-link"
           onClick={() => navigate("/my-orders")}
-          className="text-sm text-zinc-400 hover:text-white mb-4"
         >
           ← Back to My Orders
         </button>
 
-        <h1 className="text-3xl font-bold mb-4 tracking-wide">
-          Order #{order.id}
-        </h1>
+        {/* Header */}
+        <div className="order-details-header">
+          <div>
+            <h1 className="orders-title">Order #{order.id}</h1>
+            <p className="orders-subtitle">
+              Placed on {formatDate(order.created_at)}
+            </p>
+          </div>
+          <div className="order-header-right">
+            <span className={getStatusClass(order.status)}>
+              {formatStatus(order.status)}
+            </span>
+            <span className="order-header-items">
+              {items.length} item{items.length === 1 ? "" : "s"}
+            </span>
+          </div>
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-4 md:col-span-2">
-            <h2 className="text-lg font-semibold mb-3">
-              Order Info
-            </h2>
-            <div className="text-sm text-zinc-300 space-y-1">
-              <div>
-                <span className="text-zinc-500">Date: </span>
+        {/* Info + Summary */}
+        <div className="order-info-grid">
+          <div className="order-card-block">
+            <h2 className="card-title">Order Information</h2>
+            <div className="card-body">
+              <p>
+                <span className="field-label">Date:</span>{" "}
                 {formatDate(order.created_at)}
-              </div>
-              <div>
-                <span className="text-zinc-500">Status: </span>
+              </p>
+              <p>
+                <span className="field-label">Status:</span>{" "}
                 {formatStatus(order.status)}
-              </div>
-              <div>
-                <span className="text-zinc-500">Payment: </span>
-                {formatPaymentMethod(order.payment_method)}
-              </div>
+              </p>
+              <p>
+                <span className="field-label">Payment:</span>{" "}
+                {formatPayment(order.payment_method)}
+              </p>
               {order.address && (
-                <div className="mt-2">
-                  <span className="text-zinc-500">
-                    Shipping address:
-                  </span>
-                  <div className="mt-1 text-zinc-300 whitespace-pre-line">
+                <div className="field-block">
+                  <div className="field-label">Shipping address</div>
+                  <div className="field-address">
                     {order.address}
                   </div>
                 </div>
@@ -144,91 +166,92 @@ const MyOrderDetailsPage = () => {
             </div>
           </div>
 
-          <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-4">
-            <h2 className="text-lg font-semibold mb-3">
-              Summary
-            </h2>
-            <div className="flex justify-between text-sm text-zinc-300 mb-2">
-              <span>Items total</span>
-              <span>
-                ${Number(order.total || 0).toFixed(2)}
-              </span>
-            </div>
-            <div className="flex justify-between text-sm text-zinc-500 mb-2">
-              <span>Shipping</span>
-              <span>To be confirmed</span>
-            </div>
-            <div className="border-t border-zinc-700 mt-3 pt-3 flex justify-between items-center">
-              <span className="text-sm text-zinc-400">
-                Grand Total
-              </span>
-              <span className="text-xl font-bold">
-                ${Number(order.total || 0).toFixed(2)}
-              </span>
+          <div className="order-card-block">
+            <h2 className="card-title">Summary</h2>
+            <div className="card-body">
+              <p className="summary-row">
+                <span>Items total</span>
+                <span>
+                  ${Number(order.total || 0).toFixed(2)}
+                </span>
+              </p>
+              <p className="summary-row">
+                <span>Shipping</span>
+                <span>To be confirmed</span>
+              </p>
+              <div className="summary-divider" />
+              <p className="summary-row summary-row-total">
+                <span>Grand Total</span>
+                <span>
+                  ${Number(order.total || 0).toFixed(2)}
+                </span>
+              </p>
             </div>
           </div>
         </div>
 
-        <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-4">
-          <h2 className="text-lg font-semibold mb-3">
-            Items
-          </h2>
+        {/* Items */}
+        <div className="order-card-block">
+          <h2 className="card-title">Items in this Order</h2>
+          <div className="card-body">
+            {items.length === 0 ? (
+              <p className="empty-text">
+                No items in this order.
+              </p>
+            ) : (
+              <div className="order-items-list">
+                {items.map((item) => {
+                  const product = item.product || {};
+                  const imgPath = product.image || null;
+                  const imgUrl =
+                    imgPath && imgPath.startsWith("http")
+                      ? imgPath
+                      : imgPath && STORAGE_URL
+                      ? `${STORAGE_URL}/${imgPath}`
+                      : null;
 
-          {items.length === 0 ? (
-            <p className="text-sm text-zinc-400">
-              No items in this order.
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {items.map((item) => {
-                const product = item.product || {};
-                const imgPath = product.image || null;
-                const imgUrl =
-                  imgPath && imgPath.startsWith("http")
-                    ? imgPath
-                    : imgPath && STORAGE_URL
-                    ? `${STORAGE_URL}/${imgPath}`
-                    : null;
-
-                return (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between border-b border-zinc-800 pb-3 last:border-b-0 last:pb-0"
-                  >
-                    <div className="flex items-center gap-3">
-                      {imgUrl ? (
-                        <img
-                          src={imgUrl}
-                          alt={product.name}
-                          className="w-14 h-14 object-cover rounded-md bg-zinc-800"
-                        />
-                      ) : (
-                        <div className="w-14 h-14 rounded-md bg-zinc-800 flex items-center justify-center text-xs text-zinc-500">
-                          No Image
-                        </div>
-                      )}
-                      <div>
-                        <div className="font-medium text-sm">
-                          {product.name || "Product"}
-                        </div>
-                        <div className="text-xs text-zinc-500">
-                          Qty: {item.quantity} • Unit: $
-                          {Number(item.unit_price || 0).toFixed(2)}
+                  return (
+                    <div
+                      key={item.id}
+                      className="order-item-row"
+                    >
+                      <div className="order-item-left">
+                        {imgUrl ? (
+                          <img
+                            src={imgUrl}
+                            alt={product.name}
+                            className="order-item-image"
+                          />
+                        ) : (
+                          <div className="order-item-image placeholder">
+                            No Image
+                          </div>
+                        )}
+                        <div>
+                          <div className="order-item-name">
+                            {product.name || "Product"}
+                          </div>
+                          <div className="order-item-meta">
+                            Qty: {item.quantity} • Unit: $
+                            {Number(
+                              item.unit_price || 0
+                            ).toFixed(2)}
+                          </div>
                         </div>
                       </div>
+                      <div className="order-item-total">
+                        ${Number(item.line_total || 0).toFixed(2)}
+                      </div>
                     </div>
-                    <div className="text-sm font-semibold">
-                      ${Number(item.line_total || 0).toFixed(2)}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
-};
+}
 
 export default MyOrderDetailsPage;

@@ -715,3 +715,409 @@ a {
   font-size: 12px;
   cursor: pointer;
 }
+
+
+/* === My Orders / Order Details === */
+
+.my-orders-page,
+.order-details-page {
+  min-height: calc(100vh - 60px); /* leave space for navbar */
+  background-color: #000;
+  color: #fff;
+  padding: 32px 16px 48px;
+}
+
+.orders-container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* Header */
+
+.orders-header {
+  margin-bottom: 24px;
+}
+
+.orders-title {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+}
+
+.orders-subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: #a1a1aa;
+}
+
+/* Loading / errors / empty */
+
+.orders-loading {
+  text-align: center;
+  font-size: 14px;
+  color: #a1a1aa;
+}
+
+.orders-error-card,
+.orders-empty-card {
+  background: #111111;
+  border: 1px solid #2e2e2e;
+  border-radius: 16px;
+  padding: 20px 24px;
+  text-align: center;
+}
+
+.orders-error-text {
+  color: #f87171;
+  margin-bottom: 12px;
+}
+
+.orders-empty-card p {
+  margin-bottom: 12px;
+}
+
+/* List */
+
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.order-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 14px 18px;
+  border-radius: 16px;
+  border: 1px solid #27272a;
+  background: radial-gradient(circle at top left, #18181b 0, #050505 55%);
+  cursor: pointer;
+  transition: border-color 0.18s ease, transform 0.18s ease,
+    box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.order-card:hover {
+  border-color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.6);
+  background: radial-gradient(circle at top left, #1f1f23 0, #050505 60%);
+}
+
+.order-card-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.order-id-row {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.order-label {
+  color: #a1a1aa;
+}
+
+.order-id {
+  color: #f4f4f5;
+  font-weight: 600;
+}
+
+.order-date {
+  font-size: 12px;
+  color: #71717a;
+}
+
+.order-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.payment-pill {
+  font-size: 11px;
+  border-radius: 999px;
+  border: 1px solid #3f3f46;
+  padding: 3px 10px;
+  background: rgba(15, 15, 15, 0.8);
+  color: #e5e5e5;
+}
+
+/* status pills */
+
+.status-pill {
+  font-size: 11px;
+  border-radius: 999px;
+  padding: 3px 10px;
+  border: 1px solid;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-pill::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+}
+
+.status-pill.pending {
+  background: rgba(202, 138, 4, 0.12);
+  color: #fed7aa;
+  border-color: rgba(252, 211, 77, 0.7);
+}
+
+.status-pill.pending::before {
+  background: #facc15;
+}
+
+.status-pill.paid {
+  background: rgba(22, 163, 74, 0.13);
+  color: #bbf7d0;
+  border-color: rgba(74, 222, 128, 0.7);
+}
+
+.status-pill.paid::before {
+  background: #4ade80;
+}
+
+.status-pill.shipped {
+  background: rgba(37, 99, 235, 0.13);
+  color: #bfdbfe;
+  border-color: rgba(96, 165, 250, 0.7);
+}
+
+.status-pill.shipped::before {
+  background: #60a5fa;
+}
+
+.status-pill.cancelled {
+  background: rgba(220, 38, 38, 0.14);
+  color: #fecaca;
+  border-color: rgba(248, 113, 113, 0.7);
+}
+
+.status-pill.cancelled::before {
+  background: #f97373;
+}
+
+/* Right side of card */
+
+.order-card-right {
+  text-align: right;
+  min-width: 120px;
+}
+
+.order-total-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #71717a;
+}
+
+.order-total-value {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.order-items-count {
+  font-size: 12px;
+  color: #a1a1aa;
+  margin-top: 2px;
+}
+
+/* Details page */
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #a1a1aa;
+  margin-bottom: 16px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.back-link:hover {
+  color: #ffffff;
+}
+
+.order-details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.order-header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.order-header-items {
+  font-size: 12px;
+  color: #a1a1aa;
+}
+
+/* Info grid */
+
+.order-info-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 768px) {
+  .order-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .order-details-page,
+  .my-orders-page {
+    padding-top: 24px;
+  }
+
+  .order-details-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .order-header-right {
+    align-items: flex-start;
+  }
+}
+
+.order-card-block {
+  background: #111111;
+  border: 1px solid #27272a;
+  border-radius: 16px;
+  padding: 16px 18px;
+}
+
+.card-title {
+  margin: 0 0 10px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #e5e5e5;
+}
+
+.card-body {
+  font-size: 14px;
+  color: #d4d4d8;
+}
+
+.field-label {
+  color: #9ca3af;
+  font-size: 13px;
+}
+
+.field-block {
+  margin-top: 10px;
+}
+
+.field-address {
+  margin-top: 4px;
+  white-space: pre-line;
+}
+
+/* summary */
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  margin: 4px 0;
+}
+
+.summary-row span:first-child {
+  color: #e5e5e5;
+}
+
+.summary-row span:last-child {
+  color: #f4f4f5;
+}
+
+.summary-divider {
+  border-bottom: 1px solid #27272a;
+  margin: 10px 0;
+}
+
+.summary-row-total span:last-child {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+/* items */
+
+.order-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.order-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.order-item-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.order-item-image {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #18181b;
+}
+
+.order-item-image.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: #71717a;
+}
+
+.order-item-name {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.order-item-meta {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.order-item-total {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* small helper */
+
+.empty-text {
+  font-size: 14px;
+  color: #a1a1aa;
+}

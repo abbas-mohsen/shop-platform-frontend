@@ -1,7 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 
+const API_BASE = process.env.REACT_APP_API_BASE_URL;
 const STORAGE_URL = process.env.REACT_APP_STORAGE_URL;
+
+const STATUS_OPTIONS = ["pending", "paid", "shipped", "cancelled"];
 
 const AdminOrderDetailsPage = () => {
   const { id } = useParams();
@@ -9,7 +12,8 @@ const AdminOrderDetailsPage = () => {
   const navigate = useNavigate();
 
   // We expect the full order object to be passed via location.state
-  const order = location.state?.order || null;
+  const [order, setOrder] = useState(location.state?.order || null);
+  const [updating, setUpdating] = useState(false);
 
   if (!order) {
     return (
@@ -47,6 +51,46 @@ const AdminOrderDetailsPage = () => {
     return s.charAt(0).toUpperCase() + s.slice(1);
   };
 
+const handleStatusChange = async (e) => {
+  const newStatus = e.target.value;
+  if (!newStatus || newStatus === order.status) return;
+
+  try {
+    setUpdating(true);
+    const token = localStorage.getItem("auth_token");
+    const res = await fetch(`${API_BASE}/api/admin/orders/${order.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ status: newStatus }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message || "Failed to update status");
+    }
+
+    const updatedOrder = data.order || data;
+
+    setOrder((prev) => ({
+      ...prev,
+      ...updatedOrder,
+      user: updatedOrder.user ?? prev.user,
+      items: updatedOrder.items ?? prev.items,
+    }));
+  } catch (err) {
+    console.error(err);
+    alert(err.message || "Error updating status");
+  } finally {
+    setUpdating(false);
+  }
+};
+
+
   return (
     <div className="home-root">
       <button
@@ -67,6 +111,7 @@ const AdminOrderDetailsPage = () => {
           marginBottom: 24,
         }}
       >
+        {/* Customer card */}
         <div
           style={{
             backgroundColor: "#111",
@@ -96,6 +141,7 @@ const AdminOrderDetailsPage = () => {
           </div>
         </div>
 
+        {/* Order info card */}
         <div
           style={{
             backgroundColor: "#111",
@@ -110,11 +156,37 @@ const AdminOrderDetailsPage = () => {
               <span style={{ color: "#777" }}>Placed at: </span>
               {formatDate(order.created_at)}
             </div>
-            <div>
+
+            <div style={{ marginTop: 6 }}>
               <span style={{ color: "#777" }}>Status: </span>
-              {formatStatus(order.status)}
+              <select
+                value={order.status}
+                onChange={handleStatusChange}
+                disabled={updating}
+                style={{
+                  marginLeft: 6,
+                  padding: "4px 6px",
+                  fontSize: 13,
+                  backgroundColor: "#000",
+                  color: "#fff",
+                  borderRadius: 4,
+                  border: "1px solid #555",
+                }}
+              >
+                {STATUS_OPTIONS.map((st) => (
+                  <option key={st} value={st}>
+                    {formatStatus(st)}
+                  </option>
+                ))}
+              </select>
+              {updating && (
+                <span style={{ marginLeft: 8, fontSize: 12, color: "#999" }}>
+                  Updating…
+                </span>
+              )}
             </div>
-            <div>
+
+            <div style={{ marginTop: 6 }}>
               <span style={{ color: "#777" }}>Payment: </span>
               {formatPaymentMethod(order.payment_method)}
             </div>
@@ -126,6 +198,7 @@ const AdminOrderDetailsPage = () => {
         </div>
       </div>
 
+      {/* Items table */}
       <div
         style={{
           backgroundColor: "#111",

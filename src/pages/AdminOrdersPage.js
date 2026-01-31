@@ -4,8 +4,6 @@ import { Navigate, useNavigate } from "react-router-dom";
 
 const API_BASE = process.env.REACT_APP_API_BASE_URL;
 
-const STATUS_OPTIONS = ["pending", "paid", "shipped", "cancelled"];
-
 function AdminOrdersPage() {
   const { isAdmin } = useAuth();
   const [orders, setOrders] = useState([]);
@@ -20,7 +18,6 @@ function AdminOrdersPage() {
     }
 
     const token = localStorage.getItem("auth_token");
-
     if (!token) {
       setLoading(false);
       return;
@@ -37,7 +34,7 @@ function AdminOrdersPage() {
         return res.json();
       })
       .then((data) => {
-        // assuming API returns an array; if it returns {orders: [...]}, adjust to data.orders
+        // API may return an array or {orders: [...]}
         setOrders(Array.isArray(data) ? data : data.orders || []);
         setLoading(false);
       })
@@ -51,42 +48,22 @@ function AdminOrdersPage() {
     return <Navigate to="/" replace />;
   }
 
-  const handleStatusChange = async (orderId, newStatus) => {
-    const token = localStorage.getItem("auth_token");
-    try {
-      const res = await fetch(`${API_BASE}/api/admin/orders/${orderId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ status: newStatus }),
-      });
-
-      if (!res.ok) throw new Error("Failed to update status");
-      const updated = await res.json();
-
-      setOrders((prev) =>
-        prev.map((o) => (o.id === updated.id ? updated : o))
-      );
-    } catch (e) {
-      alert(e.message || "Error updating status");
-    }
-  };
-
   const handleOpenOrder = (order) => {
-    // 👉 go to React admin order details page, passing the full order in state
+    // Go to React admin order details page, passing the full order in state
     navigate(`/admin/orders/${order.id}`, { state: { order } });
   };
 
-  if (loading) return <div className="home-root">Loading orders...</div>;
-  if (error)
+  if (loading) {
+    return <div className="home-root">Loading orders...</div>;
+  }
+
+  if (error) {
     return (
       <div className="home-root" style={{ color: "red" }}>
         {error}
       </div>
     );
+  }
 
   return (
     <div className="home-root">
@@ -112,23 +89,8 @@ function AdminOrdersPage() {
                 <td>#{order.id}</td>
                 <td>{order.user ? order.user.name : "Guest"}</td>
                 <td>{order.user ? order.user.email : "-"}</td>
-                <td>${Number(order.total).toFixed(2)}</td>
-                <td>
-                  <select
-                    value={order.status}
-                    onChange={(e) =>
-                      handleStatusChange(order.id, e.target.value)
-                    }
-                    className="text-input"
-                    style={{ padding: "4px 6px", fontSize: 12 }}
-                  >
-                    {STATUS_OPTIONS.map((st) => (
-                      <option key={st} value={st}>
-                        {st}
-                      </option>
-                    ))}
-                  </select>
-                </td>
+                <td>${Number(order.total || 0).toFixed(2)}</td>
+                <td>{order.status}</td>
                 <td>{new Date(order.created_at).toLocaleString()}</td>
                 <td style={{ fontSize: 12 }}>
                   {order.items && order.items.length > 0
