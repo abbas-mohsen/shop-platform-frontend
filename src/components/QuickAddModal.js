@@ -1,11 +1,12 @@
+// src/components/QuickAddModal.js
 import React, { useEffect, useState } from "react";
 
-const STORAGE_URL =
-  process.env.REACT_APP_STORAGE_URL;
+const STORAGE_URL = process.env.REACT_APP_STORAGE_URL;
 
 function QuickAddModal({ product, isOpen, onClose, onConfirm }) {
   const [size, setSize] = useState("");
   const [quantity, setQuantity] = useState(1);
+
   useEffect(() => {
     if (isOpen && product) {
       if (Array.isArray(product.sizes) && product.sizes.length > 0) {
@@ -19,6 +20,15 @@ function QuickAddModal({ product, isOpen, onClose, onConfirm }) {
 
   if (!isOpen || !product) return null;
 
+  const getImageUrl = () => {
+    if (!product?.image) return null;
+    if (product.image.startsWith("http")) return product.image;
+    if (STORAGE_URL) return `${STORAGE_URL}/${product.image}`;
+    return product.image;
+  };
+
+  const imgUrl = getImageUrl();
+
   const handleSubmit = (e) => {
     e.preventDefault();
 
@@ -30,9 +40,16 @@ function QuickAddModal({ product, isOpen, onClose, onConfirm }) {
     onConfirm(product, sizeToUse, quantity);
   };
 
+  const handleBackdropClick = () => {
+    onClose && onClose();
+  };
+
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-backdrop" onClick={handleBackdropClick}>
+      <div
+        className="modal quickadd-modal"
+        onClick={(e) => e.stopPropagation()}
+      >
         <button
           type="button"
           className="modal-close"
@@ -43,36 +60,39 @@ function QuickAddModal({ product, isOpen, onClose, onConfirm }) {
         </button>
 
         <div className="modal-main">
+          {/* Left: image */}
           <div className="modal-image-wrap">
-            {product.image ? (
+            {imgUrl ? (
               <img
-                src={`${STORAGE_URL}/${product.image}`}
+                src={imgUrl}
                 alt={product.name}
                 className="modal-image"
               />
             ) : (
-              <div className="modal-image modal-image--empty">No image</div>
+              <div className="modal-image modal-image--empty">
+                No image
+              </div>
             )}
           </div>
 
+          {/* Right: info + form */}
           <div className="modal-info">
+            <div className="modal-category">
+              {product.category ? product.category.name : "Other"}
+            </div>
             <h2 className="modal-title">{product.name}</h2>
-
-            {product.category && (
-              <div className="modal-category">
-                {product.category.name}
-              </div>
-            )}
 
             <div className="modal-price">
               ${Number(product.price).toFixed(2)}
             </div>
 
             {product.description && (
-              <p className="modal-description">{product.description}</p>
+              <p className="modal-description">
+                {product.description}
+              </p>
             )}
 
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} className="modal-form">
               {Array.isArray(product.sizes) &&
                 product.sizes.length > 0 && (
                   <div className="modal-row">
@@ -100,7 +120,9 @@ function QuickAddModal({ product, isOpen, onClose, onConfirm }) {
                   min="1"
                   value={quantity}
                   onChange={(e) =>
-                    setQuantity(Math.max(1, Number(e.target.value) || 1))
+                    setQuantity(
+                      Math.max(1, Number(e.target.value) || 1)
+                    )
                   }
                 />
               </div>

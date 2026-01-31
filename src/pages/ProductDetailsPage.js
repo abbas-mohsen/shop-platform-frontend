@@ -1,5 +1,6 @@
+// src/pages/ProductDetailsPage.js
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 
 const API_BASE = process.env.REACT_APP_API_BASE_URL;
@@ -7,41 +8,51 @@ const STORAGE_URL = process.env.REACT_APP_STORAGE_URL;
 
 function ProductDetailsPage() {
   const { id } = useParams();
-  const [product, setProduct]   = useState(null);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState(null);
+  const navigate = useNavigate();
+
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selectedSize, setSelectedSize] = useState("");
   const [quantity, setQuantity] = useState(1);
 
   const { addToCart } = useCart();
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/products/${id}`)
-      .then((res) => {
+    const fetchProduct = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(`${API_BASE}/api/products/${id}`, {
+          headers: { Accept: "application/json" },
+        });
+
         if (!res.ok) {
           throw new Error("Failed to fetch product");
         }
-        return res.json();
-      })
-      .then((data) => {
+
+        const data = await res.json();
         setProduct(data);
-        setLoading(false);
 
         if (Array.isArray(data.sizes) && data.sizes.length > 0) {
           setSelectedSize(data.sizes[0]);
         }
-      })
-      .catch((err) => {
-        setError(err.message || "Error");
+      } catch (err) {
+        console.error(err);
+        setError(err.message || "Error loading product.");
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    if (id) {
+      fetchProduct();
+    }
   }, [id]);
 
-  if (loading) return <div>Loading product...</div>;
-  if (error)   return <div style={{ color: "red" }}>{error}</div>;
-  if (!product) return <div>Product not found</div>;
-
   const handleAddToCart = () => {
+    if (!product) return;
+
     let sizeToUse = null;
 
     if (Array.isArray(product.sizes) && product.sizes.length > 0) {
@@ -53,107 +64,168 @@ function ProductDetailsPage() {
     }
 
     addToCart(product, sizeToUse, Number(quantity) || 1);
-    alert("Added to cart!");
+    navigate("/cart");
   };
 
-  return (
-    <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
-      <div style={{ flex: "0 0 320px" }}>
-        {product.image ? (
-          <img
-            src={`${STORAGE_URL}/${product.image}`}
-            alt={product.name}
-            style={{
-              width: "100%",
-              maxWidth: 400,
-              height: "auto",
-              borderRadius: 12,
-              objectFit: "cover",
-            }}
-          />
-        ) : (
-          <div
-            style={{
-              width: 320,
-              height: 320,
-              background: "#f3f3f3",
-              borderRadius: 12,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#999",
-            }}
-          >
-            No image
-          </div>
-        )}
+  const getImageUrl = () => {
+    if (!product || !product.image) return null;
+    if (product.image.startsWith("http")) return product.image;
+    if (STORAGE_URL) return `${STORAGE_URL}/${product.image}`;
+    return `${API_BASE}/storage/${product.image}`;
+  };
+
+  const handleQtyChange = (value) => {
+    const num = Number(value);
+    if (!num || num < 1) {
+      setQuantity(1);
+    } else {
+      setQuantity(num);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="product-details-page">
+        <div className="orders-container">
+          <p className="orders-loading">Loading product...</p>
+        </div>
       </div>
+    );
+  }
 
-      <div style={{ flex: "1 1 300px" }}>
-        <div style={{ fontSize: 14, color: "#666", marginBottom: 4 }}>
-          {product.category ? product.category.name : "Other"}
-        </div>
-
-        <h1 style={{ marginTop: 0 }}>{product.name}</h1>
-        <div style={{ fontWeight: "bold", fontSize: 20, marginBottom: 8 }}>
-          ${Number(product.price).toFixed(2)}
-        </div>
-
-        <p style={{ marginBottom: 12 }}>
-          {product.description || "No description."}
-        </p>
-
-        <div style={{ marginBottom: 16, fontSize: 14 }}>
-          <strong>Available sizes: </strong>
-          {Array.isArray(product.sizes) && product.sizes.length > 0
-            ? product.sizes.join(", ")
-            : "N/A"}
-        </div>
-        {Array.isArray(product.sizes) && product.sizes.length > 0 && (
-          <div style={{ marginBottom: 12 }}>
-            <label style={{ display: "block", marginBottom: 4 }}>
-              Choose size:
-            </label>
-            <select
-              value={selectedSize}
-              onChange={(e) => setSelectedSize(e.target.value)}
-              style={{ padding: 6, borderRadius: 6, minWidth: 120 }}
+  if (error || !product) {
+    return (
+      <div className="product-details-page">
+        <div className="orders-container">
+          <div className="orders-error-card">
+            <p className="orders-error-text">
+              {error || "Product not found."}
+            </p>
+            <button
+              className="btn-outline"
+              onClick={() => navigate("/products")}
             >
-              {product.sizes.map((size) => (
-                <option key={size} value={size}>
-                  {size}
-                </option>
-              ))}
-            </select>
+              Back to products
+            </button>
           </div>
-        )}
-
-        <div style={{ marginBottom: 12 }}>
-          <label style={{ display: "block", marginBottom: 4 }}>
-            Quantity:
-          </label>
-          <input
-            type="number"
-            min={1}
-            value={quantity}
-            onChange={(e) => setQuantity(e.target.value)}
-            style={{ width: 80, padding: 4, borderRadius: 6 }}
-          />
         </div>
+      </div>
+    );
+  }
 
+  const imgUrl = getImageUrl();
+
+  return (
+    <div className="product-details-page">
+      <div className="orders-container">
         <button
-          onClick={handleAddToCart}
-          style={{
-            padding: "8px 16px",
-            borderRadius: 999,
-            border: "none",
-            background: "#0d6efd",
-            color: "#fff",
-            cursor: "pointer",
-          }}
+          className="back-link"
+          onClick={() => navigate("/products")}
         >
-          Add to cart
+          ← Back to products
         </button>
+
+        <div className="product-details-layout">
+          {/* Image card */}
+          <div className="product-details-card product-details-image-card">
+            {imgUrl ? (
+              <img
+                src={imgUrl}
+                alt={product.name}
+                className="product-details-image"
+              />
+            ) : (
+              <div className="product-details-image placeholder">
+                No image
+              </div>
+            )}
+          </div>
+
+          {/* Info card */}
+          <div className="product-details-card product-details-info-card">
+            <div className="product-details-meta">
+              <span className="product-category">
+                {product.category ? product.category.name : "Other"}
+              </span>
+            </div>
+
+            <h1 className="product-name">{product.name}</h1>
+
+            <div className="product-price">
+              ${Number(product.price).toFixed(2)}
+            </div>
+
+            <p className="product-description">
+              {product.description || "No description available."}
+            </p>
+
+            <div className="product-extra">
+              {Array.isArray(product.sizes) &&
+              product.sizes.length > 0 ? (
+                <p>
+                  <span className="field-label">
+                    Available sizes:
+                  </span>{" "}
+                  {product.sizes.join(", ")}
+                </p>
+              ) : (
+                <p>
+                  <span className="field-label">
+                    Available sizes:
+                  </span>{" "}
+                  N/A
+                </p>
+              )}
+              <p>
+                <span className="field-label">In stock:</span>{" "}
+                {product.stock ?? 0}
+              </p>
+            </div>
+
+            {Array.isArray(product.sizes) &&
+              product.sizes.length > 0 && (
+                <div className="form-field">
+                  <label className="form-label">Choose size</label>
+                  <select
+                    value={selectedSize}
+                    onChange={(e) =>
+                      setSelectedSize(e.target.value)
+                    }
+                    className="text-input"
+                    style={{ maxWidth: 160 }}
+                  >
+                    {product.sizes.map((size) => (
+                      <option key={size} value={size}>
+                        {size}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+            <div className="form-field">
+              <label className="form-label">Quantity</label>
+              <input
+                type="number"
+                min={1}
+                value={quantity}
+                onChange={(e) => handleQtyChange(e.target.value)}
+                className="text-input"
+                style={{ maxWidth: 100 }}
+              />
+            </div>
+
+            <div className="form-actions">
+              <button
+                type="button"
+                onClick={handleAddToCart}
+                className="btn-primary"
+              >
+                Add to cart
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

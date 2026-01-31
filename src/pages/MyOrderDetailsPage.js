@@ -1,16 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useCart } from "../context/CartContext";
 
-const API_BASE =
+const apiBaseUrl =
   process.env.REACT_APP_API_BASE_URL || "http://127.0.0.1:8000";
 const STORAGE_URL = process.env.REACT_APP_STORAGE_URL;
 
-function MyOrderDetailsPage() {
+const MyOrderDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { addToCart } = useCart();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [reordering, setReordering] = useState(false);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -25,23 +28,28 @@ function MyOrderDetailsPage() {
           return;
         }
 
-        const res = await fetch(`${API_BASE}/api/my-orders/${id}`, {
-          headers: {
-            Accept: "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const response = await fetch(
+          `${apiBaseUrl}/api/my-orders/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/json",
+            },
+          }
+        );
 
-        const data = await res.json();
+        const data = await response.json();
 
-        if (!res.ok) {
-          throw new Error(data.message || "Failed to load order.");
+        if (!response.ok) {
+          throw new Error(
+            data.message || "Failed to load order details."
+          );
         }
 
         setOrder(data.order || null);
-      } catch (e) {
-        console.error(e);
-        setError(e.message || "Error loading order.");
+      } catch (err) {
+        console.error(err);
+        setError(err.message || "Something went wrong.");
       } finally {
         setLoading(false);
       }
@@ -50,10 +58,12 @@ function MyOrderDetailsPage() {
     if (id) fetchOrder();
   }, [id]);
 
-  const formatDate = (iso) =>
-    iso ? new Date(iso).toLocaleString() : "";
+  const formatDate = (isoString) => {
+    if (!isoString) return "";
+    return new Date(isoString).toLocaleString();
+  };
 
-  const formatPayment = (pm) => {
+  const formatPaymentMethod = (pm) => {
     if (pm === "cash") return "Cash on Delivery";
     if (pm === "card") return "Card";
     return pm || "-";
@@ -64,7 +74,7 @@ function MyOrderDetailsPage() {
     return s.charAt(0).toUpperCase() + s.slice(1);
   };
 
-  const getStatusClass = (status) => {
+  const statusChipClasses = (status) => {
     switch (status) {
       case "paid":
         return "status-pill paid";
@@ -75,6 +85,43 @@ function MyOrderDetailsPage() {
       case "pending":
       default:
         return "status-pill pending";
+    }
+  };
+
+  const handleReorder = () => {
+    if (!order) return;
+    const items = Array.isArray(order.items) ? order.items : [];
+    if (!items.length) return;
+
+    setReordering(true);
+
+    try {
+      items.forEach((item) => {
+        const product = item.product;
+        if (!product) return;
+
+        // Try to preserve size if your order_items table has it
+        const size = item.size || null;
+
+        addToCart(
+          {
+            id: product.id,
+            name: product.name,
+            price:
+              product.price != null
+                ? product.price
+                : item.unit_price || 0,
+            image: product.image,
+            product, // keep full product ref if your CartContext uses it
+          },
+          size,
+          item.quantity || 1
+        );
+      });
+
+      navigate("/cart");
+    } finally {
+      setReordering(false);
     }
   };
 
@@ -97,8 +144,8 @@ function MyOrderDetailsPage() {
               {error || "Order not found."}
             </p>
             <button
-              className="btn-outline"
               onClick={() => navigate("/my-orders")}
+              className="btn-outline"
             >
               Back to My Orders
             </button>
@@ -113,14 +160,15 @@ function MyOrderDetailsPage() {
   return (
     <div className="order-details-page">
       <div className="orders-container">
+        {/* Back link */}
         <button
-          className="back-link"
           onClick={() => navigate("/my-orders")}
+          className="back-link"
         >
           ← Back to My Orders
         </button>
 
-        {/* Header */}
+        {/* Header row */}
         <div className="order-details-header">
           <div>
             <h1 className="orders-title">Order #{order.id}</h1>
@@ -129,16 +177,29 @@ function MyOrderDetailsPage() {
             </p>
           </div>
           <div className="order-header-right">
-            <span className={getStatusClass(order.status)}>
+            <span className={statusChipClasses(order.status)}>
               {formatStatus(order.status)}
             </span>
             <span className="order-header-items">
               {items.length} item{items.length === 1 ? "" : "s"}
             </span>
+
+            {/* Re-order button */}
+            {items.length > 0 && (
+              <button
+                type="button"
+                className="btn-outline"
+                style={{ fontSize: 12, padding: "4px 12px" }}
+                onClick={handleReorder}
+                disabled={reordering}
+              >
+                {reordering ? "Re-ordering..." : "Re-order Items"}
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Info + Summary */}
+        {/* Info + summary */}
         <div className="order-info-grid">
           <div className="order-card-block">
             <h2 className="card-title">Order Information</h2>
@@ -153,7 +214,7 @@ function MyOrderDetailsPage() {
               </p>
               <p>
                 <span className="field-label">Payment:</span>{" "}
-                {formatPayment(order.payment_method)}
+                {formatPaymentMethod(order.payment_method)}
               </p>
               {order.address && (
                 <div className="field-block">
@@ -252,6 +313,6 @@ function MyOrderDetailsPage() {
       </div>
     </div>
   );
-}
+};
 
 export default MyOrderDetailsPage;

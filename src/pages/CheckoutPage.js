@@ -1,9 +1,13 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+// src/pages/CheckoutPage.js
+import React, { useState, useMemo } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 
-const CheckoutPage = () => {
+const API_BASE =
+  process.env.REACT_APP_API_BASE_URL || "http://127.0.0.1:8000";
+
+function CheckoutPage() {
   const { cartItems, clearCart, removeFromCart } = useCart();
   const { user, isLoggedIn } = useAuth();
   const navigate = useNavigate();
@@ -14,282 +18,305 @@ const CheckoutPage = () => {
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  const apiBaseUrl =
-    process.env.REACT_APP_API_BASE_URL || "http://127.0.0.1:8000";
-
   const items = Array.isArray(cartItems) ? cartItems : [];
 
-  // ✅ Compute total safely (instead of relying on cartTotal from context)
-  const cartTotal = items.reduce((sum, item) => {
-    const price = Number(
-      item.price ??
-        item.product?.price ??
-        0
-    );
-    const qty = item.quantity || 0;
-    return sum + price * qty;
-  }, 0);
+  const { cartTotal, itemsCount } = useMemo(() => {
+    let sum = 0;
+    let count = 0;
 
+    for (const item of items) {
+      const price = Number(item.price ?? item.product?.price ?? 0);
+      const qty = item.quantity || 0;
+      count += qty;
+      sum += price * qty;
+    }
+
+    return { cartTotal: sum, itemsCount: count };
+  }, [items]);
+
+  // Require auth
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">You need to be logged in</h1>
-          <button
-            onClick={() => navigate("/login")}
-            className="border border-white px-4 py-2 rounded-md hover:bg-white hover:text-black transition"
-          >
-            Go to Login
-          </button>
+      <div className="checkout-page">
+        <div className="orders-container">
+          <div className="orders-error-card checkout-center-card">
+            <h1 className="page-title">You need to be logged in</h1>
+            <p className="orders-subtitle">
+              Log in to place your XTREMEFIT order.
+            </p>
+            <button
+              onClick={() => navigate("/login")}
+              className="btn-primary"
+              style={{ marginTop: 10 }}
+            >
+              Go to login
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
+  // Require cart not empty
   if (!items.length) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Your cart is empty</h1>
-          <button
-            onClick={() => navigate("/products")}
-            className="border border-white px-4 py-2 rounded-md hover:bg-white hover:text-black transition"
-          >
-            Shop Now
-          </button>
+      <div className="checkout-page">
+        <div className="orders-container">
+          <div className="orders-error-card checkout-center-card">
+            <h1 className="page-title">Your cart is empty</h1>
+            <p className="orders-subtitle">
+              Add items to your cart before checking out.
+            </p>
+            <button
+              onClick={() => navigate("/products")}
+              className="btn-primary"
+              style={{ marginTop: 10 }}
+            >
+              Go to products
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError("");
-  setSuccessMessage("");
-  setLoading(true);
+    e.preventDefault();
+    setError("");
+    setSuccessMessage("");
+    setLoading(true);
 
-  try {
-    const token = localStorage.getItem("auth_token");
-    console.log("🔑 Auth token:", token);
+    try {
+      const token = localStorage.getItem("auth_token");
 
-    if (!token) {
-      setError("You are not authenticated. Please login again.");
-      setLoading(false);
-      return;
-    }
-
-    const items = Array.isArray(cartItems) ? cartItems : [];
-
-    const payload = {
-      address,
-      payment_method: paymentMethod,
-      items: items.map((item) => ({
-        product_id: item.product?.id ?? item.id,
-        size: item.size,
-        quantity: item.quantity || 1,
-      })),
-    };
-
-    console.log("📦 Checkout payload being sent:", payload);
-
-    const url = `${apiBaseUrl}/api/checkout`;
-    console.log("🌍 Checkout URL:", url);
-
-    const response = await fetch(url, {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    "Accept": "application/json",         // ✅ add this
-    Authorization: `Bearer ${token}`,
-  },
-  body: JSON.stringify(payload),
-});
-
-
-    console.log("📥 Raw response:", response);
-    const data = await response.json().catch((err) => {
-      console.log("⚠️ Error parsing JSON response:", err);
-      return null;
-    });
-
-    console.log("📨 Parsed response JSON:", data);
-
-    if (!response.ok) {
-      // Laravel validation errors
-      if (data && data.errors) {
-        const firstKey = Object.keys(data.errors)[0];
-        const firstMsg = data.errors[firstKey][0];
-        console.log("❌ Validation error:", data.errors);
-        throw new Error(firstMsg);
+      if (!token) {
+        setError("You are not authenticated. Please login again.");
+        setLoading(false);
+        return;
       }
 
-      const msg =
-        (data && (data.message || data.error)) ||
-        `Request failed with status ${response.status}`;
-      console.log("❌ Non-OK response:", msg);
-      throw new Error(msg);
-    }
+      const itemsArray = Array.isArray(cartItems) ? cartItems : [];
 
-    console.log("✅ Checkout success, data:", data);
+      const payload = {
+        address,
+        payment_method: paymentMethod,
+        items: itemsArray.map((item) => ({
+          product_id: item.product?.id ?? item.id,
+          size: item.size,
+          quantity: item.quantity || 1,
+        })),
+      };
 
-    setSuccessMessage("Order placed successfully!");
-
-    if (typeof clearCart === "function") {
-      console.log("🧹 Clearing cart with clearCart()");
-      clearCart();
-    } else if (typeof removeFromCart === "function") {
-      console.log("🧹 Clearing cart by removing each item");
-      items.forEach((item) => {
-        removeFromCart(item.id, item.size || null);
+      const response = await fetch(`${API_BASE}/api/checkout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
       });
+
+      let data = null;
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
+
+      if (!response.ok) {
+        if (data && data.errors) {
+          const firstKey = Object.keys(data.errors)[0];
+          const firstMsg = data.errors[firstKey][0];
+          throw new Error(firstMsg);
+        }
+
+        const msg =
+          (data && (data.message || data.error)) ||
+          `Request failed with status ${response.status}`;
+        throw new Error(msg);
+      }
+
+      // Success
+      setSuccessMessage("Order placed successfully!");
+
+      if (typeof clearCart === "function") {
+        clearCart();
+      } else if (typeof removeFromCart === "function") {
+        itemsArray.forEach((item) => {
+          removeFromCart(item.id, item.size || null);
+        });
+      }
+
+      setTimeout(() => {
+        navigate("/my-orders");
+      }, 800);
+    } catch (err) {
+      setError(err.message || "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
-
-    setTimeout(() => {
-      console.log("➡️ Navigating to /my-orders");
-      navigate("/my-orders"); // or "/" if My Orders not done yet
-    }, 800);
-  } catch (err) {
-    console.error("🔥 Checkout error caught in catch:", err);
-    setError(err.message || "Something went wrong. Please try again.");
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   return (
-    <div className="min-h-screen bg-black text-white px-4 py-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6 tracking-wide">Checkout</h1>
+    <div className="checkout-page">
+      <div className="orders-container">
+        {/* Header */}
+        <div className="orders-header">
+          <div>
+            <h1 className="orders-title">Checkout</h1>
+            <p className="orders-subtitle">
+              {itemsCount} item{itemsCount === 1 ? "" : "s"} in your XTREMEFIT
+              order. Confirm your details and place it.
+            </p>
+          </div>
+          <Link to="/cart" className="cart-continue-link">
+            ← Back to cart
+          </Link>
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="checkout-layout">
           {/* LEFT: FORM */}
-          <div className="md:col-span-2 bg-zinc-900 rounded-xl p-6 border border-zinc-700">
-            <h2 className="text-xl font-semibold mb-4">Shipping Details</h2>
+          <div className="checkout-card">
+            <h2 className="card-title">Shipping details</h2>
+            <div className="card-body">
+              <form onSubmit={handleSubmit} className="checkout-form">
+                <div className="form-field">
+                  <label className="form-label">Name</label>
+                  <input
+                    type="text"
+                    value={user?.name || ""}
+                    disabled
+                    className="text-input text-input--disabled"
+                  />
+                </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <label className="block text-sm mb-1 text-zinc-300">Name</label>
-                <input
-                  type="text"
-                  value={user?.name || ""}
-                  disabled
-                  className="w-full px-3 py-2 rounded-md bg-zinc-800 border border-zinc-700 text-zinc-300 cursor-not-allowed"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm mb-1 text-zinc-300">
-                  Address <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  rows={3}
-                  placeholder="Street, building, floor, city, phone number..."
-                  className="w-full px-3 py-2 rounded-md bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:border-white"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm mb-2 text-zinc-300">
-                  Payment Method
-                </label>
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="payment_method"
-                      value="cod"
-                      checked={paymentMethod === "cod"}
-                      onChange={() => setPaymentMethod("cod")}
-                    />
-                    <span>Cash on Delivery</span>
+                <div className="form-field">
+                  <label className="form-label">
+                    Address <span style={{ color: "#f97373" }}>*</span>
                   </label>
-                  <label className="flex items-center gap-2 cursor-pointer opacity-60">
-                    <input
-                      type="radio"
-                      name="payment_method"
-                      value="card"
-                      checked={paymentMethod === "card"}
-                      onChange={() => setPaymentMethod("card")}
-                    />
-                    <span>Card (coming soon)</span>
-                  </label>
+                  <textarea
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    rows={3}
+                    placeholder="Street, building, floor, city, phone number..."
+                    className="text-input"
+                    style={{ resize: "vertical" }}
+                    required
+                  />
                 </div>
-              </div>
 
-              {error && (
-                <div className="text-red-400 text-sm border border-red-500 rounded-md px-3 py-2">
-                  {error}
+                <div className="form-field">
+                  <label className="form-label">Payment method</label>
+                  <div className="checkout-payment-options">
+                    <label className="checkout-payment-option">
+                      <input
+                        type="radio"
+                        name="payment_method"
+                        value="cod"
+                        checked={paymentMethod === "cod"}
+                        onChange={() => setPaymentMethod("cod")}
+                      />
+                      <span>Cash on delivery</span>
+                    </label>
+                    <label className="checkout-payment-option disabled">
+                      <input
+                        type="radio"
+                        name="payment_method"
+                        value="card"
+                        checked={paymentMethod === "card"}
+                        onChange={() => setPaymentMethod("card")}
+                      />
+                      <span>Card (coming soon)</span>
+                    </label>
+                  </div>
                 </div>
-              )}
 
-              {successMessage && (
-                <div className="text-green-400 text-sm border border-green-500 rounded-md px-3 py-2">
-                  {successMessage}
+                {error && (
+                  <div className="checkout-alert checkout-alert--error">
+                    {error}
+                  </div>
+                )}
+
+                {successMessage && (
+                  <div className="checkout-alert checkout-alert--success">
+                    {successMessage}
+                  </div>
+                )}
+
+                <div className="form-actions">
+                  <button
+                    type="submit"
+                    className="btn-primary checkout-submit-btn"
+                    disabled={loading}
+                  >
+                    {loading ? "Placing order..." : "Place order"}
+                  </button>
                 </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full md:w-auto px-6 py-2 rounded-md border border-white font-semibold tracking-wide hover:bg-white hover:text-black transition disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {loading ? "Placing order..." : "Place Order"}
-              </button>
-            </form>
+              </form>
+            </div>
           </div>
 
           {/* RIGHT: SUMMARY */}
-          <div className="bg-zinc-900 rounded-xl p-6 border border-zinc-700">
-            <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
-            <div className="space-y-3 max-h-64 overflow-y-auto pr-2">
-              {items.map((item) => {
-                const price = Number(
-                  item.price ??
-                    item.product?.price ??
-                    0
-                );
-                const qty = item.quantity || 0;
-                const lineTotal = price * qty;
+          <div className="checkout-card">
+            <h2 className="card-title">Order summary</h2>
+            <div className="card-body">
+              <div className="checkout-summary-list">
+                {items.map((item) => {
+                  const price = Number(
+                    item.price ?? item.product?.price ?? 0
+                  );
+                  const qty = item.quantity || 0;
+                  const lineTotal = price * qty;
 
-                return (
-                  <div
-                    key={`${item.id}-${item.size || "no-size"}`}
-                    className="flex justify-between text-sm border-b border-zinc-800 pb-2"
-                  >
-                    <div>
-                      <div className="font-medium">{item.name}</div>
-                      <div className="text-xs text-zinc-400">
-                        Size: {item.size || "N/A"} • Qty: {qty}
+                  return (
+                    <div
+                      key={`${item.id}-${item.size || "no-size"}`}
+                      className="checkout-summary-item"
+                    >
+                      <div className="checkout-summary-main">
+                        <div className="checkout-summary-name">
+                          {item.name}
+                        </div>
+                        <div className="checkout-summary-meta">
+                          Size: {item.size || "N/A"} • Qty: {qty}
+                        </div>
+                      </div>
+                      <div className="checkout-summary-price">
+                        ${lineTotal.toFixed(2)}
                       </div>
                     </div>
-                    <div className="font-medium">
-                      ${lineTotal.toFixed(2)}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
 
-            <div className="mt-4 border-t border-zinc-800 pt-4 flex justify-between items-center">
-              <span className="text-sm text-zinc-400">Total</span>
-              <span className="text-xl font-bold">
-                ${cartTotal.toFixed(2)}
-              </span>
-            </div>
+              <div className="summary-divider" />
 
-            <p className="mt-3 text-xs text-zinc-500">
-              Shipping cost & delivery time will be confirmed via WhatsApp / call
-              after you place the order.
-            </p>
+              <div className="checkout-summary-footer">
+                <div className="checkout-summary-row">
+                  <span>Items total</span>
+                  <span>${cartTotal.toFixed(2)}</span>
+                </div>
+                <div className="checkout-summary-row">
+                  <span>Shipping</span>
+                  <span>Calculated at delivery</span>
+                </div>
+                <div className="checkout-summary-row checkout-summary-row--total">
+                  <span>Total</span>
+                  <span>${cartTotal.toFixed(2)}</span>
+                </div>
+              </div>
+
+              <p className="checkout-summary-note">
+                Shipping cost & delivery time will be confirmed via WhatsApp /
+                call after you place the order.
+              </p>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
-};
+}
 
 export default CheckoutPage;
